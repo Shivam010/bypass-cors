@@ -1,141 +1,74 @@
 package main
 
 import (
-	"encoding/json"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-	"net/url"
-	"strings"
+	"os"
 )
-
-type Err struct {
-	Code    int
-	Message string
-	Detail  map[string]interface{}
-}
-
-func (e *Err) Error() string {
-	s, _ := json.Marshal(map[string]interface{}{"error": e})
-	return string(s)
-}
-
-func (e *Err) Value() interface{} {
-	return e.Error()
-}
-
-type Response interface {
-	StatusCode() int
-	Value() interface{}
-}
-
-func (e *Err) StatusCode() int {
-	return e.Code
-}
-
-type WithStatusCode struct {
-	Code     int
-	Response interface{}
-}
-
-func (w *WithStatusCode) Value() interface{} {
-	return w.Response
-}
-
-func (w *WithStatusCode) StatusCode() int {
-	return w.Code
-}
-
-func Return(w http.ResponseWriter, res Response) {
-	fmt.Printf("Served with: %v \n", http.StatusText(res.StatusCode()))
-
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	w.WriteHeader(res.StatusCode())
-	_, _ = fmt.Fprintln(w, res.Value())
-}
 
 type handler struct{}
 
 func (*handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
 	defer fmt.Println()
 
-	w.Header().Add("Access-Control-Allow-Origin", r.Header.Get("Origin"))
+	fmt.Printf("Proxy Request Over: %s - %s \n", r.Method, r.URL.String())
 
-	if r.URL.Path == "" || r.URL.Path == "/" {
-		fmt.Printf("Root Request: %s \n", r.Method)
-		Return(w, &Err{
-			Code:    http.StatusPreconditionFailed,
-			Message: "URL not provided",
-			Detail: map[string]interface{}{
-				"method":       r.Method,
-				"requestedURL": r.URL.String(),
-			},
-		})
+	pfr := addHeaders(w, r)
+	if pfr { // pre-flight request
 		return
 	}
 
-	requestedURL := r.URL.Path[1:]
-	if !strings.HasPrefix(requestedURL, "http") {
-		requestedURL = "http://" + requestedURL
-	}
-
-	p, err := url.ParseRequestURI(requestedURL)
-	if err != nil {
-		fmt.Printf("Invalid Request: %s - %s \n", r.Method, requestedURL)
-		Return(w, &Err{
-			Code:    http.StatusPreconditionFailed,
-			Message: err.Error(),
-			Detail: map[string]interface{}{
-				"method":       r.Method,
-				"requestedURL": requestedURL,
-			},
-		})
+	URL := getRequestURL(w, r)
+	if URL == nil { // invalid URL
 		return
 	}
 
-	fmt.Printf("Proxy Request Over: %s - %s \n", r.Method, requestedURL)
-
+	// extract request body
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		fmt.Println("Invalid Body")
-		Return(w, &Err{
+		fmt.Println("Invalid Body:", err)
+		Return(w, &Error{
 			Code:    http.StatusPreconditionFailed,
 			Message: err.Error(),
 			Detail: map[string]interface{}{
 				"method":       r.Method,
-				"requestedURL": requestedURL,
+				"requestedURL": URL.String(),
 			},
 		})
 		return
 	}
 
-	req, err := http.NewRequest(r.Method, p.String(), r.Body)
+	// create proxy request
+	req, err := http.NewRequest(r.Method, URL.String(), r.Body)
 	if err != nil {
 		fmt.Println("Request cannot be created:", err)
-		Return(w, &Err{
+		Return(w, &Error{
 			Code:    http.StatusPreconditionFailed,
 			Message: err.Error(),
 			Detail: map[string]interface{}{
 				"body":         b,
 				"method":       r.Method,
-				"requestedURL": requestedURL,
+				"requestedURL": URL.String(),
 			},
 		})
 		return
 	}
+
+	fmt.Println("UserClient --> bypass-cors -->", req.URL.Host)
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println("Request Failed:", err)
-		Return(w, &Err{
+		Return(w, &Error{
 			Code:    http.StatusUnprocessableEntity,
-			Message: "unknown host",
+			Message: err.Error(),
 			Detail: map[string]interface{}{
 				"body":         b,
 				"method":       r.Method,
-				"requestedURL": requestedURL,
+				"requestedURL": URL.String(),
 				"response":     res,
 			},
 		})
@@ -144,25 +77,33 @@ func (*handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		Return(w, &Err{
+		fmt.Println("Failed to read:", err)
+		Return(w, &Error{
 			Code:    res.StatusCode,
 			Message: err.Error(),
 			Detail: map[string]interface{}{
 				"method":       r.Method,
+				"requestedURL": URL.String(),
 				"body":         b,
-				"requestedURL": requestedURL,
-
 				"response":     res,
 				"responseCode": res.StatusCode,
 			},
 		})
 		return
 	}
-	Return(w, &WithStatusCode{res.StatusCode, string(body)})
+
+	Return(w, &ValuerStruct{res.StatusCode, string(body)})
 }
 
 func main() {
-	if err := http.ListenAndServe(":8080", &handler{}); err != nil {
+	var PORT string
+	if PORT = os.Getenv("PORT"); PORT == "" {
+		flag.StringVar(&PORT, "p", "8080", "PORT at which the server will run")
+	}
+	flag.Parse()
+
+	fmt.Printf("\nRunning Proxy ByPass Cors Server at port = %v...\n\n", PORT)
+	if err := http.ListenAndServe(":"+PORT, &handler{}); err != nil {
 		log.Println("\n\nPanic", err)
 	}
 }
