@@ -1,0 +1,22 @@
+name: Release
+on: [release]
+jobs:
+
+  release:
+    name: Release It
+    runs-on: ubuntu-latest
+    steps:
+
+    - name: Build First
+      uses: actions/checkout@v1
+      uses: ./.github/workflows/my-action
+
+    - name: Release linux
+      uses: ngs/go-release.action@v1.0.1
+      env:
+        GOOS: linux
+        GOARCH: amd64
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      
+
+
