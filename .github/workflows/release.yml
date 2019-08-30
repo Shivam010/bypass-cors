@@ -9,7 +9,6 @@ jobs:
 
     - name: Build First
       uses: actions/checkout@v1
-      uses: ./.github/workflows/my-action
 
     - name: Release linux
       uses: ngs/go-release.action@v1.0.1
