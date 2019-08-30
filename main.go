@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -42,7 +43,7 @@ func (*handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// create proxy request
-	req, err := http.NewRequest(r.Method, URL.String(), r.Body)
+	req, err := http.NewRequest(r.Method, URL.String(), bytes.NewReader(b))
 	if err != nil {
 		fmt.Println("Request cannot be created:", err)
 		Return(w, &Error{
