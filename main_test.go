@@ -22,6 +22,8 @@ type args struct {
 type resChecker struct {
 	code int
 	body string
+	// set noBodyCheck to true if do not want to check body
+	noBodyCheck bool
 	// list header keys which should be present in response
 	headers []string
 }
@@ -71,7 +73,7 @@ func Test_RootRequest(t *testing.T) {
 		if test.args.w.Code != test.resChr.code {
 			t.Fatalf("Status code mismatched got: %v, want: %v", test.args.w.Code, test.resChr.code)
 		}
-		if !cmp.Equal(test.args.w.Body.String(), test.resChr.body) {
+		if !test.resChr.noBodyCheck && !cmp.Equal(test.args.w.Body.String(), test.resChr.body) {
 			t.Fatalf("Body mismatched got: %s, want: %s", test.args.w.Body.String(), test.resChr.body)
 		}
 	})
@@ -119,7 +121,7 @@ func Test_Success(t *testing.T) {
 			if tt.args.w.Code != tt.resChr.code {
 				t.Fatalf("Status code mismatched got: %v, want: %v", tt.args.w.Code, tt.resChr.code)
 			}
-			if !cmp.Equal(tt.args.w.Body.String(), tt.resChr.body) {
+			if !tt.resChr.noBodyCheck && !cmp.Equal(tt.args.w.Body.String(), tt.resChr.body) {
 				t.Fatalf("Body mismatched got: %s, want: %s", tt.args.w.Body.String(), tt.resChr.body)
 			}
 		})
@@ -140,7 +142,10 @@ func Test_OtherRequests(t *testing.T) {
 			setup: func(ar *args, rc *resChecker) {
 				ar.r, _ = http.NewRequest("GET", "/invalid-request", &bytes.Buffer{})
 				rc.code = http.StatusUnprocessableEntity
-				rc.body = `{"error":{"Code":422,"Message":"Get http://invalid-request: dial tcp: lookup invalid-request: no such host","Detail":{"body":"","method":"GET","requestedURL":"http://invalid-request","response":null}}}` + "\n"
+				// Note: the error message `Get http://invalid-request: dial tcp: lookup invalid-request: no such host`
+				// 	varies from environment to environment and hence, omitting the check
+				rc.noBodyCheck = true
+				//rc.body = `{"error":{"Code":422,"Message":"Get http://invalid-request: dial tcp: lookup invalid-request: no such host","Detail":{"body":"","method":"GET","requestedURL":"http://invalid-request","response":null}}}` + "\n"
 			},
 		},
 		{
@@ -193,7 +198,7 @@ func Test_OtherRequests(t *testing.T) {
 			if tt.args.w.Code != tt.resChr.code {
 				t.Fatalf("Status code mismatched got: %v, want: %v", tt.args.w.Code, tt.resChr.code)
 			}
-			if !cmp.Equal(tt.args.w.Body.String(), tt.resChr.body) {
+			if !tt.resChr.noBodyCheck && !cmp.Equal(tt.args.w.Body.String(), tt.resChr.body) {
 				t.Fatalf("Body mismatched got: %s, want: %s", tt.args.w.Body.String(), tt.resChr.body)
 			}
 		})
