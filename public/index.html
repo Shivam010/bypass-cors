@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Bypass CORS</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+    <style>
+        body {
+            color: #555;
+            text-align: center;
+        }
+
+        #description {
+            font-size: 20px;
+        }
+
+        #example {
+            font-family: Monaco,serif;
+        }
+
+        #github_icon {
+            margin-right: 10px;
+            height: 20px;
+            width: 20px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Bypass CORS</h1>
+    <br>
+    <br>
+
+    <p id="description">Proxy your requests just by prefixing your request URL with: https://non-cors.herokuapp.com/ with all the headers and payload as it is..</p>
+    <br>
+    <br>
+
+    <b>Example: </b>
+    <p id="example">GET https://joke-api-strict-cors.appspot.com/jokes/ten    ==>    GET https://non-cors.herokuapp.com/https://joke-api-strict-cors.appspot.com/jokes/ten</p>
+    <a href="https://github.com/Shivam010/bypass-cors" target="_blank"><img id="github_icon" src="https://camo.githubusercontent.com/d0518022b7a02d405ad5112a0c8aa455cbfe952e/68747470733a2f2f6564656e742e6769746875622e696f2f537570657254696e7949636f6e732f696d616765732f7376672f6769746875622e737667">Github Repo</a>
+
+</div>
+
+</body>
+</html> 

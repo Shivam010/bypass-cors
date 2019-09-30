@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -113,15 +114,6 @@ func addHeaders(w http.ResponseWriter, r *http.Request) bool {
 func getRequestURL(w http.ResponseWriter, r *http.Request) *url.URL {
 
 	if r.URL.Path == "" || r.URL.Path == "/" {
-		fmt.Println("Root Request")
-		Return(w, &Error{
-			Code:    http.StatusPreconditionFailed,
-			Message: "URL not provided",
-			Detail: map[string]interface{}{
-				"method":       r.Method,
-				"requestedURL": r.URL.String(),
-			},
-		})
 		return nil
 	}
 
@@ -145,4 +137,11 @@ func getRequestURL(w http.ResponseWriter, r *http.Request) *url.URL {
 	}
 
 	return URL
+}
+
+func serveLandingPage(w http.ResponseWriter, r *http.Request)  {
+	b, _ := ioutil.ReadFile("public/index.html")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(b)
+	return
 }

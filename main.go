@@ -24,6 +24,7 @@ func (*handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	URL := getRequestURL(w, r)
 	if URL == nil { // invalid URL
+		serveLandingPage(w, r)
 		return
 	}
 
@@ -104,6 +105,9 @@ func main() {
 	flag.Parse()
 
 	fmt.Printf("\nRunning Proxy ByPass Cors Server at port = %v...\n\n", PORT)
+	fs := http.FileServer(http.Dir("public"))
+	http.Handle("/", fs)
+
 	if err := http.ListenAndServe(":"+PORT, &handler{}); err != nil {
 		log.Println("\n\nPanic", err)
 	}
