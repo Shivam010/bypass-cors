@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -144,4 +145,120 @@ func TestAddHeaders(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGetRequestURL(t *testing.T) {
+	t.Run("No Path", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/replace-me", nil)
+		req.URL.Path = ""
+		rec := httptest.NewRecorder()
+
+		reqURL := getRequestURL(rec, req)
+		if reqURL != nil {
+			t.Errorf("Expected nil response, got %v", reqURL)
+		}
+
+		resp := rec.Result()
+
+		if resp.StatusCode != http.StatusPreconditionFailed {
+			t.Errorf("Incorrect HTTP response code.\nExpected: %d\n  Actual: %d\n", http.StatusPreconditionFailed, resp.StatusCode)
+		}
+
+		body, _ := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+
+		expectedBody := "{\"error\":{\"Code\":412,\"Message\":\"URL not provided\",\"Detail\":{\"method\":\"GET\",\"requestedURL\":\"\"}}}\n"
+		if string(body) != expectedBody {
+			t.Errorf("Incorrect response body.\nExpected: %q\n  Actual: %q\n", expectedBody, body)
+		}
+	})
+
+	t.Run("Root Path", func(t *testing.T) {
+		req := httptest.NewRequest("POST", "/", nil)
+		rec := httptest.NewRecorder()
+
+		reqURL := getRequestURL(rec, req)
+		if reqURL != nil {
+			t.Errorf("Expected nil response, got %v", reqURL)
+		}
+
+		resp := rec.Result()
+
+		if resp.StatusCode != http.StatusPreconditionFailed {
+			t.Errorf("Incorrect HTTP response code.\nExpected: %d\n  Actual: %d\n", http.StatusPreconditionFailed, resp.StatusCode)
+		}
+
+		body, _ := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+
+		expectedBody := "{\"error\":{\"Code\":412,\"Message\":\"URL not provided\",\"Detail\":{\"method\":\"POST\",\"requestedURL\":\"/\"}}}\n"
+		if string(body) != expectedBody {
+			t.Errorf("Incorrect response body.\nExpected: %q\n  Actual: %q\n", expectedBody, body)
+		}
+	})
+
+	t.Run("Invalid", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/replace-me", nil)
+		req.URL.Path = string([]byte{'/', 0x7f})
+		rec := httptest.NewRecorder()
+
+		reqURL := getRequestURL(rec, req)
+		if reqURL != nil {
+			t.Errorf("Expected nil response, got %v", reqURL)
+		}
+
+		resp := rec.Result()
+
+		if resp.StatusCode != http.StatusPreconditionFailed {
+			t.Errorf("Incorrect HTTP response code.\nExpected: %d\n  Actual: %d\n", http.StatusPreconditionFailed, resp.StatusCode)
+		}
+
+		body, _ := ioutil.ReadAll(resp.Body)
+		defer resp.Body.Close()
+
+		expectedBody := "{\"error\":{\"Code\":412,\"Message\":\"parse http://\u007f: net/url: invalid control character in URL\",\"Detail\":{\"method\":\"GET\",\"requestedURL\":\"http://\u007f\"}}}\n"
+		if string(body) != expectedBody {
+			t.Errorf("Incorrect response body.\nExpected: %q\n  Actual: %q\n", expectedBody, body)
+		}
+	})
+
+	t.Run("Unprefixed", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/hostname", nil)
+		rec := httptest.NewRecorder()
+
+		reqURL := getRequestURL(rec, req)
+		if reqURL == nil {
+			t.Fatal("Unexpected nil request URL.")
+		}
+
+		if reqURL.Scheme != "http" {
+			t.Errorf("Incorrect URL scheme.\nExpected: %q\n  Actual: %q\n", "http", reqURL.Scheme)
+		}
+
+		if reqURL.Host != "hostname" {
+			t.Errorf("Incorrect URL host.\nExpected: %q\n  Actual: %q\n", "hostname", reqURL.Host)
+		}
+	})
+
+	t.Run("Prefixed", func(t *testing.T) {
+		req := httptest.NewRequest("GET", "/https://hostname", nil)
+		rec := httptest.NewRecorder()
+
+		reqURL := getRequestURL(rec, req)
+		if reqURL == nil {
+			resp := rec.Result()
+			body, _ := ioutil.ReadAll(resp.Body)
+			defer resp.Body.Close()
+			t.Error(string(body))
+			t.Fatal("Unexpected nil request URL.")
+		}
+
+		if reqURL.Scheme != "https" {
+			t.Errorf("Incorrect URL scheme.\nExpected: %q\n  Actual: %q\n", "https", reqURL.Scheme)
+		}
+
+		if reqURL.Host != "hostname" {
+			t.Errorf("Incorrect URL host.\nExpected: %q\n  Actual: %q\n", "hostname", reqURL.Host)
+		}
+	})
 }
