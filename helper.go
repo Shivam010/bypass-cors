@@ -114,6 +114,7 @@ func addHeaders(w http.ResponseWriter, r *http.Request) bool {
 func getRequestURL(w http.ResponseWriter, r *http.Request) *url.URL {
 
 	if r.URL.Path == "" || r.URL.Path == "/" {
+		serveLandingPage(w, r)
 		return nil
 	}
 
@@ -142,6 +143,7 @@ func getRequestURL(w http.ResponseWriter, r *http.Request) *url.URL {
 func serveLandingPage(w http.ResponseWriter, r *http.Request)  {
 	b, _ := ioutil.ReadFile("public/index.html")
 	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	_, _ = w.Write(b)
 	return
 }

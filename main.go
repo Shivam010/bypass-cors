@@ -23,8 +23,7 @@ func (*handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	URL := getRequestURL(w, r)
-	if URL == nil { // invalid URL
-		serveLandingPage(w, r)
+	if URL == nil {
 		return
 	}
 
