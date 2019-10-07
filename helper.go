@@ -61,38 +61,53 @@ func (e *Error) StatusCode() int {
 	return e.Code
 }
 
+const (
+	// headers
+	VaryHeader   = "Vary"
+	OriginHeader = "Origin"
+	QuoteHeader  = "quote"
+	// Access Control headers
+	AllowOrigin      = "Access-Control-Allow-Origin"
+	AllowMethods     = "Access-Control-Allow-Methods"
+	AllowHeaders     = "Access-Control-Allow-Headers"
+	AllowCredentials = "Access-Control-Allow-Credentials"
+	// Access control request headers
+	RequestMethod  = "Access-Control-Request-Method"
+	RequestHeaders = "Access-Control-Request-Headers"
+)
+
 // defaultHeaders handles a general request and add/set corresponding headers
 func defaultHeaders(w http.ResponseWriter, r *http.Request) {
 	headers := w.Header()
-	origin := r.Header.Get("Origin")
+	origin := r.Header.Get(OriginHeader)
 
 	// Adding Vary header - for http cache
-	headers.Add("Vary", "Origin")
+	headers.Add(VaryHeader, OriginHeader)
 
 	// quote
-	headers.Set("quote", "Be Happy :)")
+	headers.Set(QuoteHeader, "Be Happy :)")
 
 	// Allowing only the requester - can be set to "*" too
-	headers.Set("Access-Control-Allow-Origin", origin)
+	headers.Set(AllowOrigin, origin)
 	// Always allowing credentials - just for the sake of proxy request
-	headers.Set("Access-Control-Allow-Credentials", "true")
+	headers.Set(AllowCredentials, "true")
 }
 
 // headersForPreflight handles the pre-flight cors request and add/set the
 // corresponding headers
 func headersForPreflight(w http.ResponseWriter, r *http.Request) {
 	headers := w.Header()
-	reqMethod := r.Header.Get("Access-Control-Request-Method")
-	reqHeaders := r.Header.Get("Access-Control-Request-Headers")
+	reqMethod := r.Header.Get(RequestMethod)
+	reqHeaders := r.Header.Get(RequestHeaders)
 
 	// Vary header - for http cache
-	headers.Add("Vary", "Access-Control-Request-Method")
-	headers.Add("Vary", "Access-Control-Request-Headers")
+	headers.Add(VaryHeader, RequestMethod)
+	headers.Add(VaryHeader, RequestHeaders)
 
 	// Allowing the requested method
-	headers.Set("Access-Control-Allow-Methods", strings.ToUpper(reqMethod))
+	headers.Set(AllowMethods, strings.ToUpper(reqMethod))
 	// Allowing the requested headers
-	headers.Set("Access-Control-Allow-Headers", reqHeaders)
+	headers.Set(AllowHeaders, reqHeaders)
 }
 
 // addHeaders handles request and set headers accordingly. It returns true if
@@ -101,7 +116,7 @@ func addHeaders(w http.ResponseWriter, r *http.Request) bool {
 
 	defaultHeaders(w, r)
 
-	if r.Method == http.MethodOptions && r.Header.Get("Access-Control-Request-Method") != "" {
+	if r.Method == http.MethodOptions && r.Header.Get(RequestMethod) != "" {
 		headersForPreflight(w, r)
 		Return(w, &ValuerStruct{Code: http.StatusOK})
 		return true
@@ -110,7 +125,7 @@ func addHeaders(w http.ResponseWriter, r *http.Request) bool {
 	return false
 }
 
-// getRequestURL returns the reuested URL to bypass-cors
+// getRequestURL returns the requested URL to bypass-cors
 func getRequestURL(w http.ResponseWriter, r *http.Request) *url.URL {
 
 	if r.URL.Path == "" || r.URL.Path == "/" {
