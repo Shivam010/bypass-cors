@@ -26,8 +26,8 @@ Proxy your requests just by prefixing your request URL with: `https://non-cors.h
 
 ```http request
 GET https://joke-api-strict-cors.appspot.com/jokes/ten    ==>    GET https://non-cors.herokuapp.com/https://joke-api-strict-cors.appspot.com/jokes/ten
-
 ``` 
+![Example with fetch](demo/cors-bypass.gif)
 ### Request for Contribution
 Changes and improvements are more than welcome! 
 
