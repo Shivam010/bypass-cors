@@ -26,8 +26,27 @@ Proxy your requests just by prefixing your request URL with: `https://non-cors.h
 
 ```http request
 GET https://joke-api-strict-cors.appspot.com/jokes/ten    ==>    GET https://non-cors.herokuapp.com/https://joke-api-strict-cors.appspot.com/jokes/ten
+```
 
-``` 
+```shell script
+curl -X POST https://non-cors.herokuapp.com/https://jsonplaceholder.typicode.com/posts -d "{title: 'foo'}"
+curl -X DELETE https://non-cors.herokuapp.com/https://jsonplaceholder.typicode.com/posts
+curl -X PUT https://non-cors.herokuapp.com/https://jsonplaceholder.typicode.com/posts/1 -d "{title: 'bar'}"
+```
+
+You can also run this locally, building it in Go:
+
+```shell script
+go build
+```
+
+And then running it, and making some curl requests similar to above:
+
+```shell script
+./bypass-cors
+curl localhost:8080/http://example.com
+```
+
 ### Request for Contribution
 Changes and improvements are more than welcome! 
 
