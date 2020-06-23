@@ -20,7 +20,7 @@ type Valuer interface {
 func Return(w http.ResponseWriter, res Valuer) {
 	fmt.Printf("Served with: %d-%v \n", res.StatusCode(), http.StatusText(res.StatusCode()))
 
-	w.Header().Set("Content-Type", "application/json; charset=utf-8")
+	//w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(res.StatusCode())
 	_, _ = fmt.Fprintln(w, res.Value())
 }
