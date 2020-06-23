@@ -159,7 +159,7 @@ func Test_OtherRequests(t *testing.T) {
 				ar.r, _ = http.NewRequest("GET", "", &bytes.Buffer{})
 				ar.r.URL.Path = "%invalid%"
 				rc.code = http.StatusPreconditionFailed
-				rc.body = `{"error":{"Code":412,"Message":"parse http://invalid%: invalid URL escape \"%\"","Detail":{"method":"GET","requestedURL":"http://invalid%"}}}` + "\n"
+				rc.body = `{"error":{"Code":412,"Message":"parse \"http://invalid%\": invalid URL escape \"%\"","Detail":{"method":"GET","requestedURL":"http://invalid%"}}}` + "\n"
 			},
 		},
 		{
