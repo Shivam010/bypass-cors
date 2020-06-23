@@ -59,8 +59,10 @@ func (*handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("UserClient --> bypass-cors -->", req.URL.Host)
 
-	// TODO: add user's request information to the new request object
-	//  to pass them downstream. Follow Issue: Shivam010/bypass-cors#5
+	// Populate the rest of the header
+	for k, v := range r.Header {
+		req.Header.Add(k, v[0])
+	}
 
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
