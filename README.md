@@ -1,3 +1,7 @@
+> Note: This repository and project is for educational and testing purposes only, any illegal or bad use of project or its hosted service `https://non-cors.herokuapp.com` is solely the responsibility of the users using it. Me or the contributors has nothing to do with that.
+
+> Also, the hosted service https://non-cors.herokuapp.com has been disabled for now, for safety. Sorry for any inconvenience.
+
 # bypass-cors 
 >a proxy server to bypass CORS (Cross-Origin Resource Sharing) enabled servers
 
@@ -37,4 +41,3 @@ Please make your changes in a specific branch and request to pull into master! I
 
 ### License
 The application, its design and its code all are licensed under the [MIT license.](https://github.com/Shivam010/bypass-cors/blob/master/LICENSE)
- 

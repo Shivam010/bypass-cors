@@ -107,7 +107,7 @@ func main() {
 
 	fmt.Printf("\nStarting Proxy ByPass-Cors Server at port(:%v)...\n\n", PORT)
 
-	if err := http.ListenAndServe(":"+PORT, &handler{}); err != nil {
+	if err := http.ListenAndServe(":"+PORT, License(&handler{})); err != nil {
 		log.Println("\n\nPanics", err)
 	}
 }
