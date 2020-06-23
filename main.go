@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"os"
 )
 
 type handler struct{}
@@ -60,6 +59,11 @@ func (*handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println("UserClient --> bypass-cors -->", req.URL.Host)
 
+	// Populate the rest of the header
+	for k, v := range r.Header {
+		req.Header.Add(k, v[0])
+	}
+
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
 		fmt.Println("Request Failed:", err)
@@ -97,14 +101,13 @@ func (*handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	var PORT string
-	if PORT = os.Getenv("PORT"); PORT == "" {
-		flag.StringVar(&PORT, "p", "8080", "PORT at which the server will run")
-	}
+
+	// parse all flags set in `init`
 	flag.Parse()
 
-	fmt.Printf("\nRunning Proxy ByPass Cors Server at port = %v...\n\n", PORT)
+	fmt.Printf("\nStarting Proxy ByPass-Cors Server at port(:%v)...\n\n", PORT)
+
 	if err := http.ListenAndServe(":"+PORT, &handler{}); err != nil {
-		log.Println("\n\nPanic", err)
+		log.Println("\n\nPanics", err)
 	}
 }
