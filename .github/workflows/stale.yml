@@ -14,6 +14,5 @@ jobs:
     - uses: actions/stale@v1
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
-        stale-issue-message: 'Due to no activity in past days, the issue is been marked as stale'
         stale-pr-message: 'Due to no activity in past days, the PR is been marked as stale'
         days-before-close: 1
