@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"github.com/google/go-cmp/cmp"
 	"net/http"
@@ -107,13 +108,38 @@ func Test_Success(t *testing.T) {
 				rc.body = fmt.Sprintln("Success")
 			},
 		},
-		// TODO: add test for pre-flight request
+		{
+			name: "OPTIONS-Request",
+			args: &args{
+				w:   httptest.NewRecorder(),
+				r:   nil,
+				srv: &http.Server{Addr: ":8181", Handler: http.NotFoundHandler()},
+			},
+			resChr: &resChecker{
+				headers: []string{
+					VaryHeader, QuoteHeader,
+					AllowOrigin, AllowCredentials,
+				},
+			},
+			setup: func(ar *args, rc *resChecker) {
+				ar.srv.Handler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+					w.WriteHeader(http.StatusOK)
+					_, _ = fmt.Fprintf(w, "Success")
+				})
+				go ar.srv.ListenAndServe()
+				ar.r, _ = http.NewRequest("OPTIONS", "/localhost"+ar.srv.Addr, &bytes.Buffer{})
+				rc.code = http.StatusOK
+				rc.body = fmt.Sprintln("Success")
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
 			tt.setup(tt.args, tt.resChr)
-			defer tt.args.srv.Shutdown(nil)
+			ctx, cancel := context.WithTimeout(context.Background(), 1000)
+			defer cancel()
+			defer tt.args.srv.Shutdown(ctx)
 
 			ha := &handler{}
 			ha.ServeHTTP(tt.args.w, tt.args.r)
